@@ -276,11 +276,19 @@ def build_external_item(full,assets,label):
     rec['tags']=[x for x in tags if x]
     return rec
 
+def editor_html():
+    p=os.path.join(os.path.dirname(os.path.abspath(__file__)),'editor_snippet.html')
+    try: return open(p,encoding='utf-8').read()
+    except Exception: return ''
+
+def write_index(out,items):
+    html=HTML_TPL.replace('<!--__EDITOR__-->',editor_html()).replace('/*__DATA__*/',json.dumps(items,ensure_ascii=False))
+    with open(os.path.join(out,'index.html'),'w',encoding='utf-8') as f: f.write(html)
+
 def flush(out,items):
     with open(os.path.join(out,'catalog.json'),'w',encoding='utf-8') as f:
         json.dump(items,f,ensure_ascii=False)
-    with open(os.path.join(out,'index.html'),'w',encoding='utf-8') as f:
-        f.write(HTML_TPL.replace('/*__DATA__*/',json.dumps(items,ensure_ascii=False)))
+    write_index(out,items)
 
 def human_size(n):
     for u in ('B','KB','MB','GB'):
@@ -295,7 +303,7 @@ def human_dur(s):
 def main():
     global FFMPEG,FFPROBE
     ap=argparse.ArgumentParser()
-    ap.add_argument('--out',required=True); ap.add_argument('--media-root',required=True)
+    ap.add_argument("--out",required=True); ap.add_argument("--media-root",default="")
     ap.add_argument('--src',action='append',default=[])
     ap.add_argument('--filelist',default=None,help='archivo con lista de rutas (modo externo)')
     ap.add_argument('--external',default='FUERA DE DRONE',help='etiqueta para items en modo filelist')
@@ -303,7 +311,11 @@ def main():
     ap.add_argument('--limit',type=int,default=0)
     ap.add_argument('--geocode',action='store_true',help='reverse-geocode GPS a colonia/municipio (Nominatim)')
     ap.add_argument('--only-drone',dest='only_drone',action='store_true',help='solo archivos de dron (DJI/HYPERLAPSE/PANO); excluye DSC_ Nikon etc.')
+    ap.add_argument('--render-only',dest='render_only',action='store_true',help='solo regenera index.html desde catalog.json existente (no escanea)')
     a=ap.parse_args(); FFMPEG=a.ffmpeg; FFPROBE=a.ffprobe
+    if a.render_only:
+        items=json.load(open(os.path.join(a.out,'catalog.json'),encoding='utf-8')); write_index(a.out,items)
+        print(f'render-only: {len(items)} items -> {a.out}/index.html'); return
     assets=os.path.join(a.out,'assets'); os.makedirs(assets,exist_ok=True)
     items=[]; nseen=0
     if a.filelist:
@@ -454,7 +466,7 @@ function scrub(el,d){if(!d.sprite)return;const N=16,C=4;
 function card(d){const c=document.createElement('div');c.className='card';
  const t=document.createElement('div');t.className='thumb';if(d.poster)t.style.backgroundImage=`url('${d.poster}')`;
  t.innerHTML=`<span class=badge>${d.type==='video'?'▶ video':(d.raw?'📷 RAW':'📷 foto')}</span>`+(d.raw?'<span class=raw>+DNG</span>':'')+(d.durtxt?`<span class=dur>${d.durtxt}</span>`:'');
- if(d.type==='video')scrub(t,d);t.onclick=()=>window.open(encodeURI(d.src),'_blank');
+ if(d.type==='video')scrub(t,d);t.onclick=()=>d.type==='photo'&&window.openPhoto?window.openPhoto(d):window.open(encodeURI(d.src),'_blank');
  const m=document.createElement('div');m.className='meta';
  const gps=(d.lat!=null&&d.lon!=null)?`<a href="https://maps.google.com/?q=${d.lat},${d.lon}" target=_blank>📍 ${d.lat},${d.lon}</a>`:'';
  const geo=(d.geo&&(d.geo.colonia||d.geo.municipio||d.geo.road))?`<div class=row style="color:#9c9">🗺 ${[d.geo.road,d.geo.colonia,d.geo.municipio].filter(Boolean).join(', ')}</div>`:'';
@@ -465,11 +477,11 @@ function card(d){const c=document.createElement('div');c.className='card';
   `<div class=row style="color:#9bd">${fh}</div>`+
   `<div class=row>${d.durtxt?`<span>⏱ <b>${d.durtxt}</b></span>`:''}<span>💾 <b>${d.sizetxt}</b></span>${d.res?`<span>🖥 ${d.res}</span>`:''}${modelo}</div>`+
   externo+geo+`<div class=row>${gps}</div>`+
-  `<div class=links><a href="${encodeURI(d.src)}" target=_blank>abrir archivo ↗</a><a href="${encodeURI(d.folderlink)}" target=_blank>📂 abrir carpeta</a></div>`;
+  `<div class=links>${d.type==='photo'?`<a href="#" onclick="openPhoto(DATA.find(x=>x.id==='${d.id}'));return false">⬇ JPG / editar</a>`:''}<a href="${encodeURI(d.src)}" target=_blank>abrir archivo ↗</a><a href="${encodeURI(d.folderlink)}" target=_blank>📂 abrir carpeta</a></div>`;
  c.appendChild(t);c.appendChild(m);return c}
 function render(){const terms=q.value.toLowerCase().split(/\s+/).filter(Boolean);
  const res=DATA.filter(d=>{for(const t of terms)if(!d._s.includes(t))return false;for(const p of active)if(!d.tags.includes(p))return false;return true});
- const nv=res.filter(d=>d.type==='video').length;stat.textContent=`— ${res.length} resultados (${nv} video, ${res.length-nv} foto)`;
+ window.__res=res;const nv=res.filter(d=>d.type==='video').length;stat.textContent=`— ${res.length} resultados (${nv} video, ${res.length-nv} foto)`;
  const groups={};res.forEach(d=>{(groups[d.folder]=groups[d.folder]||[]).push(d)});
  let keys=Object.keys(groups);const s=sortSel.value;
  const gdate=k=>{const a=groups[k];for(const d of a)if(d.date)return d.date;return (a[0].year||'')+(a[0].month||'')+(a[0].day||'')};
@@ -488,6 +500,8 @@ function render(){const terms=q.value.toLowerCase().split(/\s+/).filter(Boolean)
   g.appendChild(head);g.appendChild(grid);frag.appendChild(g)}
  out.appendChild(frag)}
 q.addEventListener('input',render);sortSel.addEventListener('change',render);render();
-</script></body></html>"""
+</script>
+<!--__EDITOR__-->
+</body></html>"""
 
 if __name__=='__main__': main()

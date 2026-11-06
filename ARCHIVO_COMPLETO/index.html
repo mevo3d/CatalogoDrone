@@ -43,7 +43,7 @@ function scrub(el,d){if(!d.sprite)return;const N=16,C=4;
 function card(d){const c=document.createElement('div');c.className='card';
  const t=document.createElement('div');t.className='thumb';if(d.poster)t.style.backgroundImage=`url('${d.poster}')`;
  t.innerHTML=`<span class=badge>${d.type==='video'?'▶ video':(d.raw?'📷 RAW':'📷 foto')}</span>`+(d.raw?'<span class=raw>+DNG</span>':'')+(d.durtxt?`<span class=dur>${d.durtxt}</span>`:'');
- if(d.type==='video')scrub(t,d);t.onclick=()=>window.open(encodeURI(d.src),'_blank');
+ if(d.type==='video')scrub(t,d);t.onclick=()=>d.type==='photo'&&window.openPhoto?window.openPhoto(d):window.open(encodeURI(d.src),'_blank');
  const m=document.createElement('div');m.className='meta';
  const gps=(d.lat!=null&&d.lon!=null)?`<a href="https://maps.google.com/?q=${d.lat},${d.lon}" target=_blank>📍 ${d.lat},${d.lon}</a>`:'';
  const geo=(d.geo&&(d.geo.colonia||d.geo.municipio||d.geo.road))?`<div class=row style="color:#9c9">🗺 ${[d.geo.road,d.geo.colonia,d.geo.municipio].filter(Boolean).join(', ')}</div>`:'';
@@ -54,11 +54,11 @@ function card(d){const c=document.createElement('div');c.className='card';
   `<div class=row style="color:#9bd">${fh}</div>`+
   `<div class=row>${d.durtxt?`<span>⏱ <b>${d.durtxt}</b></span>`:''}<span>💾 <b>${d.sizetxt}</b></span>${d.res?`<span>🖥 ${d.res}</span>`:''}${modelo}</div>`+
   externo+geo+`<div class=row>${gps}</div>`+
-  `<div class=links><a href="${encodeURI(d.src)}" target=_blank>abrir archivo ↗</a><a href="${encodeURI(d.folderlink)}" target=_blank>📂 abrir carpeta</a></div>`;
+  `<div class=links>${d.type==='photo'?`<a href="#" onclick="openPhoto(DATA.find(x=>x.id==='${d.id}'));return false">⬇ JPG / editar</a>`:''}<a href="${encodeURI(d.src)}" target=_blank>abrir archivo ↗</a><a href="${encodeURI(d.folderlink)}" target=_blank>📂 abrir carpeta</a></div>`;
  c.appendChild(t);c.appendChild(m);return c}
 function render(){const terms=q.value.toLowerCase().split(/\s+/).filter(Boolean);
  const res=DATA.filter(d=>{for(const t of terms)if(!d._s.includes(t))return false;for(const p of active)if(!d.tags.includes(p))return false;return true});
- const nv=res.filter(d=>d.type==='video').length;stat.textContent=`— ${res.length} resultados (${nv} video, ${res.length-nv} foto)`;
+ window.__res=res;const nv=res.filter(d=>d.type==='video').length;stat.textContent=`— ${res.length} resultados (${nv} video, ${res.length-nv} foto)`;
  const groups={};res.forEach(d=>{(groups[d.folder]=groups[d.folder]||[]).push(d)});
  let keys=Object.keys(groups);const s=sortSel.value;
  const gdate=k=>{const a=groups[k];for(const d of a)if(d.date)return d.date;return (a[0].year||'')+(a[0].month||'')+(a[0].day||'')};
@@ -77,4 +77,159 @@ function render(){const terms=q.value.toLowerCase().split(/\s+/).filter(Boolean)
   g.appendChild(head);g.appendChild(grid);frag.appendChild(g)}
  out.appendChild(frag)}
 q.addEventListener('input',render);sortSel.addEventListener('change',render);render();
-</script></body></html>
+</script>
+<style>
+#ed{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;display:none;align-items:stretch;justify-content:center}
+#ed.on{display:flex}
+#ed .box{display:flex;flex:1;max-width:1500px;margin:12px;background:#17171a;border:1px solid #333;border-radius:12px;overflow:hidden}
+#ed .view{flex:1;display:flex;flex-direction:column;min-width:0;background:#000}
+#ed .vt{padding:8px 12px;background:#1b1b1d;display:flex;gap:10px;align-items:center;border-bottom:1px solid #2c2c30}
+#ed .vt b{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+#ed .cv{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
+#ed canvas{max-width:100%;max-height:100%;object-fit:contain}
+#ed .msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.8);padding:10px 16px;border-radius:8px;color:#fff;font-size:13px;display:none;text-align:center}
+#ed .panel{width:330px;flex:none;padding:14px;overflow:auto;border-left:1px solid #2c2c30;background:#1b1b1d}
+#ed h3{margin:0 0 10px;font-size:14px}#ed label{display:block;font-size:12px;color:#aaa;margin:10px 0 3px}
+#ed select,#ed input[type=text]{width:100%;background:#222;color:#eee;border:1px solid #444;border-radius:6px;padding:6px;font-size:13px}
+#ed .btn{display:block;width:100%;margin-top:8px;padding:10px;border-radius:8px;border:1px solid #3a6;background:#25402f;color:#eaffef;font-size:14px;cursor:pointer;text-align:center}
+#ed .btn.alt{border-color:#47a;background:#223049;color:#e6f0ff}#ed .btn.ghost{border-color:#444;background:#262626;color:#ddd;font-size:12px;padding:7px}
+#ed .btn:disabled{opacity:.5;cursor:wait}
+#ed .sl{display:flex;align-items:center;gap:8px}#ed .sl input{flex:1}#ed .sl span{width:38px;text-align:right;font-size:12px;color:#9bd}
+#ed .row2{display:flex;gap:6px}#ed .row2>*{flex:1}
+#ed .note{font-size:11px;color:#e8a55a;margin-top:6px}
+#ed .x{background:#333;border:0;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer}
+@media(max-width:800px){#ed .box{flex-direction:column;margin:0;border-radius:0}#ed .panel{width:auto;max-height:55%;border-left:0;border-top:1px solid #2c2c30}}
+</style>
+<div id=ed><div class=box>
+ <div class=view><div class=vt><b id=edname></b><button class=x id=edclose>✕ Cerrar</button></div>
+  <div class=cv><canvas id=edcv></canvas><div class=msg id=edmsg></div></div></div>
+ <div class=panel>
+  <label style="margin-top:0">Resolución del JPG</label><select id=edres></select>
+  <div id=stepA>
+   <h3 style="margin-top:16px">¿Cómo la quieres?</h3>
+   <button class=btn id=btnOrig>⬇ Descargar original (JPG)</button>
+   <button class="btn alt" id=btnEdit>🎨 Edición rápida (luz, color, contraste…)</button>
+   <div class=note id=rawnote></div>
+  </div>
+  <div id=stepB style="display:none">
+   <h3 style="margin-top:16px">Edición rápida</h3>
+   <div id=sliders></div>
+   <button class="btn ghost" id=btnHold>👁 Mantén pulsado: ver original</button>
+   <label>Estilos guardados</label>
+   <select id=edstyle></select>
+   <div class=row2 style="margin-top:6px"><input type=text id=edsname placeholder="Nombre del estilo"><button class="btn ghost" id=btnSave style="margin-top:0">Guardar</button></div>
+   <div class=row2><button class="btn ghost" id=btnDel>Borrar estilo</button><button class="btn ghost" id=btnReset>Restablecer</button></div>
+   <button class=btn id=btnDl>⬇ Aplicar y descargar JPG</button>
+   <h3 style="margin-top:18px">Aplicar este estilo a varias</h3>
+   <select id=edscope></select>
+   <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type=checkbox id=eddedupe checked> Omitir el DNG si existe JPG con el mismo nombre</label>
+   <button class="btn alt" id=btnBatch>📦 Aplicar y descargar ZIP</button>
+   <button class="btn ghost" id=btnBack>← Volver</button>
+  </div>
+ </div></div></div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const WEB=/\.(jpe?g|png|webp|gif)$/i, EXT=/\.[^.]+$/;
+const RES=[['orig','Original (máxima)'],['3840','4K · 3840 px'],['2560','2560 px'],['1920','Full HD · 1920 px'],['1280','1280 px'],['800','800 px (web)']];
+const SL=[['exp','☀️ Luz (exposición)',-100,100],['con','◐ Contraste',-100,100],['tmp','🌡 Temperatura (frío ↔ cálido)',-100,100],['hue','🎨 Tono / Hue (°)',-180,180],['sat','Saturación',-100,100],['vib','✨ Vibración',-100,100]];
+const DEF={exp:0,con:0,tmp:0,hue:0,sat:0,vib:0};
+const ls={get(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let cur=null,P={...DEF},busy=false,raf=0,showOrig=false;
+const cv=$('edcv'),cx=cv.getContext('2d',{willReadFrequently:true});
+RES.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;$('edres').appendChild(o)});
+$('edres').value=ls.get('catdrone_res','orig');$('edres').onchange=()=>ls.set('catdrone_res',$('edres').value);
+SL.forEach(([k,t,mn,mx])=>{const w=document.createElement('div');w.innerHTML=`<label>${t}</label><div class=sl><input type=range min=${mn} max=${mx} value=0 id=sl_${k}><span id=sv_${k}>0</span></div>`;$('sliders').appendChild(w);
+ const r=w.querySelector('input');r.oninput=()=>{P[k]=+r.value;$('sv_'+k).textContent=r.value;sched()};r.ondblclick=()=>{r.value=0;r.oninput()}});
+function setP(p){P={...DEF,...p};SL.forEach(([k])=>{$('sl_'+k).value=P[k];$('sv_'+k).textContent=P[k]});sched()}
+function msg(t){const m=$('edmsg');m.style.display=t?'block':'none';m.textContent=t||''}
+// ---- motor de edición ----
+function lut(p,gain){const t=new Uint8ClampedArray(256),e=Math.pow(2,p.exp/50),f=1+p.con/100;
+ for(let i=0;i<256;i++){let v=Math.pow(i/255,2.2)*e*gain;v=Math.pow(Math.max(0,v),1/2.2);v=(v-.5)*f+.5;t[i]=v*255}return t}
+function process(img,p){const d=img.data,n=d.length,tp=p.tmp/100;
+ const LR=lut(p,1+.25*tp),LG=lut(p,1),LB=lut(p,1-.25*tp);
+ const a=p.hue*Math.PI/180,c=Math.cos(a),s=Math.sin(a),doHue=p.hue!==0;
+ const m=[.213+c*.787-s*.213,.715-c*.715-s*.715,.072-c*.072+s*.928,.213-c*.213+s*.143,.715+c*.285+s*.140,.072-c*.072-s*.283,.213-c*.213-s*.787,.715-c*.715+s*.715,.072+c*.928+s*.072];
+ const sat=1+p.sat/100,vib=p.vib/100,doSat=p.sat!==0||p.vib!==0;
+ for(let i=0;i<n;i+=4){let r=LR[d[i]],g=LG[d[i+1]],b=LB[d[i+2]];
+  if(doHue){const R=m[0]*r+m[1]*g+m[2]*b,G=m[3]*r+m[4]*g+m[5]*b,B=m[6]*r+m[7]*g+m[8]*b;r=R;g=G;b=B}
+  if(doSat){const mx=Math.max(r,g,b),mn=Math.min(r,g,b),cs=mx?(mx-mn)/mx:0,k=Math.max(0,sat*(1+vib*(1-cs))),y=.299*r+.587*g+.114*b;r=y+(r-y)*k;g=y+(g-y)*k;b=y+(b-y)*k}
+  d[i]=r;d[i+1]=g;d[i+2]=b}
+ return img}
+// ---- carga de imagen completa (JPG/PNG directo, DNG revelado en el navegador) ----
+const cache=new Map();
+function fromImg(u){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);ok(c)};im.onerror=()=>no(new Error('No se pudo cargar '+u));im.src=u})}
+async function decodeRaw(url,say){say('Descargando RAW…');const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);const buf=new Uint8Array(await r.arrayBuffer());
+ say('Revelando RAW (puede tardar unos segundos)…');const LR=(await import('../vendor/libraw/index.js')).default,lr=new LR();
+ try{await lr.open(buf,{useCameraWb:true,outputBps:8,outputColor:1,userQual:3});const im=await lr.imageData();
+  const w=im.width,h=im.height,src=im.data,c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d'),id=x.createImageData(w,h),o=id.data,ch=im.colors||3;
+  for(let i=0,j=0,n=w*h;i<n;i++,j+=ch){o[i*4]=src[j];o[i*4+1]=src[j+1];o[i*4+2]=src[j+2];o[i*4+3]=255}
+  x.putImageData(id,0,0);return c}finally{lr.dispose&&lr.dispose()}}
+async function loadFull(d,say){say=say||(()=>{});if(cache.has(d.id)){return cache.get(d.id)}
+ let c,lim=false;
+ if(d.full){c=await fromImg(encodeURI(d.full))}
+ else if(WEB.test(d.name)&&!d.external){c=await fromImg(encodeURI(d.src))}
+ else if(d.raw&&!d.external){try{c=await decodeRaw(encodeURI(d.src),say)}catch(e){console.warn('RAW falló',e);c=await fromImg(d.poster);lim=true}}
+ else{c=await fromImg(d.poster);lim=true}
+ const r={c,lim};cache.clear();cache.set(d.id,r);return r}
+function drawPrev(){if(!cur||!cur.base)return;const b=cur.base;cv.width=b.width;cv.height=b.height;
+ const img=new ImageData(new Uint8ClampedArray(b.data),b.width,b.height);cx.putImageData(showOrig?img:process(img,P),0,0)}
+function sched(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;drawPrev()})}
+function mkBase(c){const s=Math.min(1,1400/Math.max(c.width,c.height)),w=Math.round(c.width*s),h=Math.round(c.height*s),t=document.createElement('canvas');t.width=w;t.height=h;const x=t.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,w,h);return x.getImageData(0,0,w,h)}
+function targetSize(c,res){if(res==='orig')return[c.width,c.height];const m=+res,s=Math.min(1,m/Math.max(c.width,c.height));return[Math.round(c.width*s),Math.round(c.height*s)]}
+async function toJpeg(c,res,p){const[w,h]=targetSize(c,res),t=document.createElement('canvas');t.width=w;t.height=h;const x=t.getContext('2d',{willReadFrequently:true});x.imageSmoothingQuality='high';x.drawImage(c,0,0,w,h);
+ if(p)x.putImageData(process(x.getImageData(0,0,w,h),p),0,0);return new Promise(ok=>t.toBlob(ok,'image/jpeg',.92))}
+function fname(d,res,edited){const b=d.name.replace(EXT,'');return b+(d.raw?'_RAW':'')+(res!=='orig'?'_'+res+'px':'')+(edited?'_edit':'')+'.jpg'}
+function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+// ---- estilos ----
+const dayKey=d=>d.date||d.folder;
+function styles(){return ls.get('catdrone_styles',{})}
+function fillStyles(){const s=styles(),sel=$('edstyle'),dk=ls.get('catdrone_daystyle',{})[dayKey(cur.d)];sel.innerHTML='<option value="">— elegir estilo —</option>';
+ if(dk)sel.innerHTML+='<option value="__day">★ Estilo del día ('+dayKey(cur.d)+')</option>';
+ const last=ls.get('catdrone_last',null);if(last)sel.innerHTML+='<option value="__last">↺ Último usado</option>';
+ Object.keys(s).forEach(n=>{const o=document.createElement('option');o.value='s:'+n;o.textContent=n;sel.appendChild(o)})}
+$('edstyle').onchange=e=>{const v=e.target.value;if(!v)return;if(v==='__day')setP(ls.get('catdrone_daystyle',{})[dayKey(cur.d)]);else if(v==='__last')setP(ls.get('catdrone_last',DEF));else setP(styles()[v.slice(2)]||DEF)};
+$('btnSave').onclick=()=>{const n=$('edsname').value.trim();if(!n){$('edsname').focus();return}const s=styles();s[n]={...P};ls.set('catdrone_styles',s);$('edsname').value='';fillStyles();$('edstyle').value='s:'+n};
+$('btnDel').onclick=()=>{const v=$('edstyle').value;if(v.startsWith('s:')){const s=styles();delete s[v.slice(2)];ls.set('catdrone_styles',s);fillStyles()}};
+$('btnReset').onclick=()=>setP(DEF);
+function remember(d){ls.set('catdrone_last',{...P});const m=ls.get('catdrone_daystyle',{});m[dayKey(d)]={...P};ls.set('catdrone_daystyle',m)}
+const hold=$('btnHold');['mousedown','touchstart'].forEach(e=>hold.addEventListener(e,ev=>{ev.preventDefault();showOrig=true;drawPrev()}));['mouseup','mouseleave','touchend'].forEach(e=>hold.addEventListener(e,()=>{if(showOrig){showOrig=false;drawPrev()}}));
+// ---- lotes ----
+function scopes(d){const photos=DATA.filter(x=>x.type==='photo'),fol=photos.filter(x=>x.folder===d.folder),day=d.date?photos.filter(x=>x.date===d.date):fol,fil=(window.__res||[]).filter(x=>x.type==='photo');
+ return[['fol','Esta carpeta ('+fol.length+')',fol],['day','Mismo día'+(d.date?' '+d.date:'')+' ('+day.length+')',day],['fil','Todas las fotos filtradas ahora ('+fil.length+')',fil]]}
+function fillScopes(){const sel=$('edscope');sel.innerHTML='';scopes(cur.d).forEach(([k,t])=>{const o=document.createElement('option');o.value=k;o.textContent=t;sel.appendChild(o)})}
+function dedupe(list){const jp=new Set(list.filter(x=>/\.jpe?g$/i.test(x.name)).map(x=>x.folder+'|'+x.name.replace(EXT,'').toLowerCase()));return list.filter(x=>!(x.raw&&jp.has(x.folder+'|'+x.name.replace(EXT,'').toLowerCase())))}
+const CT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CT[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+function makeZip(files){const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+ for(const f of files){const nb=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+  const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(12,0x21,true);lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nb.length,true);
+  parts.push(lh.buffer,nb,f.data);
+  const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(14,0x21,true);ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,nb.length,true);ch.setUint32(42,off,true);
+  cd.push(ch.buffer,nb);off+=30+nb.length+sz}
+ let cds=0;cd.forEach(x=>cds+=x.byteLength);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cds,true);e.setUint32(16,off,true);
+ return new Blob([...parts,...cd,e.buffer],{type:'application/zip'})}
+$('btnBatch').onclick=async()=>{if(busy)return;const sc=scopes(cur.d).find(s=>s[0]===$('edscope').value);let list=sc[2];if($('eddedupe').checked)list=dedupe(list);
+ if(!list.length)return;if(list.length>150&&!confirm(list.length+' fotos pueden usar mucha memoria en el navegador. ¿Continuar?'))return;
+ busy=true;$('btnBatch').disabled=true;const res=$('edres').value,files=[],p={...P},d0=cur.d;remember(d0);
+ try{for(let i=0;i<list.length;i++){const d=list[i];msg(`Procesando ${i+1}/${list.length}\n${d.name}`);
+   try{const{c}=await loadFull(d,t=>msg(`${i+1}/${list.length} · ${t}`));const blob=await toJpeg(c,res,p);files.push({name:fname(d,res,true),data:new Uint8Array(await blob.arrayBuffer())})}catch(e){console.warn('omitida',d.name,e)}}
+  if(files.length){const used=new Set();files.forEach(f=>{let n=f.name,k=1;while(used.has(n))n=f.name.replace(/\.jpg$/,'_'+(k++)+'.jpg');f.name=n;used.add(n)});save(makeZip(files),'catalogo_drone_'+(d0.date||'lote')+'.zip')}
+  msg(files.length+' foto(s) en el ZIP');setTimeout(()=>msg(''),2500)}finally{busy=false;$('btnBatch').disabled=false;cache.clear();cur.loaded=null;await openLoad(d0,true)}};
+// ---- apertura ----
+async function openLoad(d,keepStep){msg('Cargando…');try{const r=await loadFull(d,msg);cur.loaded=r;cur.base=mkBase(r.c);$('rawnote').textContent=r.lim?'⚠ No se pudo obtener la imagen a resolución completa; se usará la vista previa pequeña (480 px).':'';drawPrev()}catch(e){msg('Error: '+e.message);return}msg('')}
+window.openPhoto=async d=>{cur={d,base:null,loaded:null};P={...DEF};$('ed').classList.add('on');$('edname').textContent=d.name+(d.raw?'  (RAW — se revela en el navegador)':'');
+ $('stepA').style.display='';$('stepB').style.display='none';setP(DEF);fillStyles();fillScopes();await openLoad(d)};
+$('edclose').onclick=()=>{$('ed').classList.remove('on');cur=null;msg('')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cur)$('edclose').onclick()});
+$('btnEdit').onclick=()=>{$('stepA').style.display='none';$('stepB').style.display='';const dk=ls.get('catdrone_daystyle',{})[dayKey(cur.d)];if(dk){$('edstyle').value='__day';setP(dk)}};
+$('btnBack').onclick=()=>{$('stepB').style.display='none';$('stepA').style.display='';setP(DEF)};
+$('btnOrig').onclick=async()=>{if(busy||!cur)return;busy=true;const d=cur.d,res=$('edres').value;
+ try{if(res==='orig'&&/\.jpe?g$/i.test(d.name)&&!d.external){save(await (await fetch(encodeURI(d.src))).blob(),d.name)}
+  else{msg('Generando JPG…');const r=cur.loaded||await loadFull(d,msg);save(await toJpeg(r.c,res,null),fname(d,res,false))}}catch(e){msg('Error: '+e.message);setTimeout(()=>msg(''),3000)}finally{busy=false;if($('edmsg').textContent==='Generando JPG…')msg('')}};
+$('btnDl').onclick=async()=>{if(busy||!cur)return;busy=true;const d=cur.d,res=$('edres').value;
+ try{msg('Aplicando edición…');const r=cur.loaded||await loadFull(d,msg);save(await toJpeg(r.c,res,P),fname(d,res,true));remember(d);fillStyles()}catch(e){msg('Error: '+e.message);setTimeout(()=>msg(''),3000)}finally{busy=false;if($('edmsg').textContent==='Aplicando edición…')msg('')}};
+})();
+</script>
+
+</body></html>

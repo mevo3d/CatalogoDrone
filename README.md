@@ -10,6 +10,7 @@ Generador de catálogos web navegables para el material de dron (videos y fotos 
 - Deriva etiquetas de la ruta (región, municipio, colonia, lugar, tema) y geocodifica (`geocache.json`).
 - Detecta material editado (carpetas FINAL, EDITADAS, nombres con MEJORADO, etc.).
 - Cada catálogo es un HTML autocontenido con buscador en vivo y resultados agrupados por carpeta.
+- **Descarga y edición de fotos**: desde cada foto se baja un JPG (original o editado) en la resolución elegida; los DNG se revelan en el navegador. Edición básica tipo Camera Raw (luz, contraste, temperatura, tono, saturación, vibración), estilos guardados y aplicación por lote a un ZIP.
 - Un menú maestro (`index.html`) lista todos los catálogos con su conteo de videos y fotos.
 
 ## Estructura
@@ -18,6 +19,8 @@ Generador de catálogos web navegables para el material de dron (videos y fotos 
 |---|---|
 | `build_catalog.py` | Generador de un catálogo (`catalog.json` + `index.html`). |
 | `actualizar.sh` | Re-escanea las fuentes (solo procesa archivos nuevos), reconstruye el menú y levanta el servidor web (puerto 8088). |
+| `editor_snippet.html` | Editor/descargador JPG que se inyecta en cada catálogo. |
+| `vendor/libraw/` | LibRaw-WASM (revelado de DNG en el navegador). |
 | `menu.py` | Reconstruye el menú maestro auto-detectando los catálogos. |
 | `index.html` | Menú maestro. |
 | `ARCHIVO_COMPLETO/` | Catálogo de todas las regiones. |
