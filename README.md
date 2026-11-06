@@ -35,6 +35,17 @@ python3 build_catalog.py --out OUT --media-root /volume5/DRONE/MEDIA \
 ./actualizar.sh   # en el NAS, cuando haya material nuevo
 ```
 
+### Enlace con el servidor
+
+El repo vive en el Mac; el NAS (`imevoserver`, usuario `mevo`, llave `~/.ssh/id_ed25519`) solo recibe archivos.
+
+```sh
+./deploy.sh --dry   # ver qué se enviaría
+./deploy.sh         # enviar código a /volume5/DRONE/_CATALOGO
+ssh imevoserver 'cd /volume5/DRONE/_CATALOGO && ./actualizar.sh'   # regenerar catálogos
+./pull.sh           # traer catálogos regenerados para versionarlos
+```
+
 Requiere Python 3, ffmpeg/ffprobe y dcraw (para RAW). Las rutas del NAS (`/volume5/DRONE/...`) están fijas en los scripts.
 
 ## Versiones
