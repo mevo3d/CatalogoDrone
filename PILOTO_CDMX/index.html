@@ -1,0 +1,74 @@
+<!doctype html><html lang=es><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><title>Catalogo DRONE</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:14px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;background:#0f0f10;color:#eee}
+header{position:sticky;top:0;background:#1b1b1d;padding:12px 16px;border-bottom:1px solid #333;z-index:20}
+h1{margin:0 0 8px;font-size:17px}#q{width:100%;padding:10px 12px;font-size:15px;border-radius:8px;border:1px solid #444;background:#222;color:#fff}
+#chips{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}.chip{padding:3px 10px;border-radius:14px;background:#2a2a2a;border:1px solid #444;cursor:pointer;font-size:12px}
+.chip.on{background:#3a6;border-color:#3a6;color:#000;font-weight:600}#stat{color:#999;font-size:12px;margin-left:8px}
+#sort{background:#222;color:#ddd;border:1px solid #444;border-radius:6px;padding:4px 6px;font-size:12px;margin-top:8px}
+.grp{margin:18px 16px 0}.ghead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;background:#1c1c20;border:1px solid #2c2c30;border-radius:8px;position:sticky;top:118px;z-index:10}
+.ghead .gt{font-weight:600}.ghead .gd{color:#9bd;font-size:12px}.ghead .gc{color:#888;font-size:12px}
+.ghead a{color:#7cf;text-decoration:none;font-size:12px;margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;padding:10px 0}
+.card{background:#1c1c1e;border:1px solid #2c2c2e;border-radius:10px;overflow:hidden}
+.thumb{position:relative;width:100%;aspect-ratio:16/9;background:#000 center/cover no-repeat;cursor:pointer}
+.badge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.72);padding:1px 7px;border-radius:10px;font-size:11px}
+.raw{position:absolute;top:6px;right:6px;background:#c83;padding:1px 7px;border-radius:10px;font-size:11px}
+.dur{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.78);padding:1px 7px;border-radius:6px;font-size:11px}
+.meta{padding:8px 10px}.nm{font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row{color:#aaa;font-size:11px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}.row b{color:#cde;font-weight:600}
+.links{margin-top:5px;font-size:11px;display:flex;gap:10px}.links a{color:#7cf;text-decoration:none}
+</style></head><body>
+<header><h1>📁 Catalogo DRONE<span id=stat></span></h1>
+<input id=q placeholder='Buscar: ej. "zocalo", "alameda 2023", "cuautla noche" ...'>
+<div><select id=sort><option value=date>Ordenar grupos: fecha (reciente)</option><option value=datea>fecha (antigua)</option><option value=name>nombre carpeta</option><option value=count>cantidad</option></select>
+<span id=chips></span></div></header>
+<div id=out></div>
+<script>
+const DATA=[{"id": "fa3b71156ea0d3b6", "name": "DJI_0001.MOV", "type": "video", "raw": false, "src": "../../MEDIA/CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM/DJI_0001.MOV", "folder": "CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM", "folderlink": "../../MEDIA/CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM", "region": "CDMX", "municipio": "COYOCÁN", "places": ["METROHM"], "tod": null, "lat": null, "lon": null, "time": null, "size": 328817417, "sizetxt": "313.6 MB", "year": "2017", "month": "04", "day": "17", "date": "2017-04-17", "dur": 43.877167, "durtxt": "0:43", "res": "1920x1080", "poster": "assets/fa3b71156ea0d3b6_p.jpg", "sprite": "assets/fa3b71156ea0d3b6_s.jpg", "tags": ["CDMX", "COYOCÁN", "METROHM", "VIDEO", "MOV", "2017", "abril"]}, {"id": "ad8e4108bbffd858", "name": "DJI_0002.MOV", "type": "video", "raw": false, "src": "../../MEDIA/CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM/DJI_0002.MOV", "folder": "CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM", "folderlink": "../../MEDIA/CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM", "region": "CDMX", "municipio": "COYOCÁN", "places": ["METROHM"], "tod": null, "lat": null, "lon": null, "time": null, "size": 4091190181, "sizetxt": "3.8 GB", "year": "2017", "month": "04", "day": "17", "date": "2017-04-17", "dur": 545.9454, "durtxt": "9:05", "res": "3840x2160", "poster": "assets/ad8e4108bbffd858_p.jpg", "sprite": "assets/ad8e4108bbffd858_s.jpg", "tags": ["CDMX", "COYOCÁN", "METROHM", "VIDEO", "MOV", "2017", "abril"]}, {"id": "862cd2a9b1598e5d", "name": "DJI_0003.MOV", "type": "video", "raw": false, "src": "../../MEDIA/CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM/DJI_0003.MOV", "folder": "CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM", "folderlink": "../../MEDIA/CDMX/COYOCÁN/VIDEO/2017/04_ABRIL/17_METROHM", "region": "CDMX", "municipio": "COYOCÁN", "places": ["METROHM"], "tod": null, "lat": null, "lon": null, "time": null, "size": 1176262382, "sizetxt": "1.1 GB", "year": "2017", "month": "04", "day": "17", "date": "2017-04-17", "dur": 156.990167, "durtxt": "2:36", "res": "3840x2160", "poster": "assets/862cd2a9b1598e5d_p.jpg", "sprite": "assets/862cd2a9b1598e5d_s.jpg", "tags": ["CDMX", "COYOCÁN", "METROHM", "VIDEO", "MOV", "2017", "abril"]}, {"id": "0f0718a0fbe4b0f0", "name": "DJI_0087.DNG", "type": "photo", "raw": true, "src": "../../MEDIA/CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA/DJI_0087.DNG", "folder": "CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA", "folderlink": "../../MEDIA/CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA", "region": "CDMX", "municipio": "MIGUEL HIDALGO", "places": ["ACUARIO IBURSA"], "tod": null, "lat": null, "lon": null, "time": null, "size": 35004491, "sizetxt": "33.4 MB", "year": "2020", "month": "03", "day": "12", "date": "2020-03-12", "poster": "assets/0f0718a0fbe4b0f0_t.jpg", "tags": ["CDMX", "MIGUEL HIDALGO", "ACUARIO IBURSA", "FOTO", "RAW", "DNG", "2020", "marzo"]}, {"id": "a9425951a9b644c5", "name": "DJI_0087.JPG", "type": "photo", "raw": false, "src": "../../MEDIA/CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA/DJI_0087.JPG", "folder": "CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA", "folderlink": "../../MEDIA/CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA", "region": "CDMX", "municipio": "MIGUEL HIDALGO", "places": ["ACUARIO IBURSA"], "tod": null, "lat": null, "lon": null, "time": null, "size": 8817215, "sizetxt": "8.4 MB", "year": "2020", "month": "03", "day": "12", "date": "2020-03-12", "poster": "assets/a9425951a9b644c5_t.jpg", "tags": ["CDMX", "MIGUEL HIDALGO", "ACUARIO IBURSA", "FOTO", "JPG", "2020", "marzo"]}, {"id": "f5f438070a691c83", "name": "DJI_0088.DNG", "type": "photo", "raw": true, "src": "../../MEDIA/CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA/DJI_0088.DNG", "folder": "CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA", "folderlink": "../../MEDIA/CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA", "region": "CDMX", "municipio": "MIGUEL HIDALGO", "places": ["ACUARIO IBURSA"], "tod": null, "lat": null, "lon": null, "time": null, "size": 34995035, "sizetxt": "33.4 MB", "year": "2020", "month": "03", "day": "12", "date": "2020-03-12", "poster": "assets/f5f438070a691c83_t.jpg", "tags": ["CDMX", "MIGUEL HIDALGO", "ACUARIO IBURSA", "FOTO", "RAW", "DNG", "2020", "marzo"]}, {"id": "910ce81d9d61a320", "name": "DJI_0088.JPG", "type": "photo", "raw": false, "src": "../../MEDIA/CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA/DJI_0088.JPG", "folder": "CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA", "folderlink": "../../MEDIA/CDMX/MIGUEL HIDALGO/FOTO/2020/03_MARZO/12_ACUARIO IBURSA", "region": "CDMX", "municipio": "MIGUEL HIDALGO", "places": ["ACUARIO IBURSA"], "tod": null, "lat": null, "lon": null, "time": null, "size": 8711314, "sizetxt": "8.3 MB", "year": "2020", "month": "03", "day": "12", "date": "2020-03-12", "poster": "assets/910ce81d9d61a320_t.jpg", "tags": ["CDMX", "MIGUEL HIDALGO", "ACUARIO IBURSA", "FOTO", "JPG", "2020", "marzo"]}, {"id": "02748b043e3109d7", "name": "DJI_0086.MOV", "type": "video", "raw": false, "src": "../../MEDIA/CDMX/MIGUEL HIDALGO/VIDEO/2020/03_MARZO/12_ACUARIO IBURSA/DJI_0086.MOV", "folder": "CDMX/MIGUEL HIDALGO/VIDEO/2020/03_MARZO/12_ACUARIO IBURSA", "folderlink": "../../MEDIA/CDMX/MIGUEL HIDALGO/VIDEO/2020/03_MARZO/12_ACUARIO IBURSA", "region": "CDMX", "municipio": "MIGUEL HIDALGO", "places": ["ACUARIO IBURSA"], "tod": null, "lat": null, "lon": null, "time": null, "size": 1160227473, "sizetxt": "1.1 GB", "year": "2020", "month": "03", "day": "12", "date": "2020-03-12", "dur": 132.665867, "durtxt": "2:12", "res": "1920x1080", "poster": "assets/02748b043e3109d7_p.jpg", "sprite": "assets/02748b043e3109d7_s.jpg", "tags": ["CDMX", "MIGUEL HIDALGO", "ACUARIO IBURSA", "VIDEO", "MOV", "2020", "marzo"]}, {"id": "e03cb9e36283a907", "name": "DJI_0089.MOV", "type": "video", "raw": false, "src": "../../MEDIA/CDMX/MIGUEL HIDALGO/VIDEO/2020/03_MARZO/12_ACUARIO IBURSA/DJI_0089.MOV", "folder": "CDMX/MIGUEL HIDALGO/VIDEO/2020/03_MARZO/12_ACUARIO IBURSA", "folderlink": "../../MEDIA/CDMX/MIGUEL HIDALGO/VIDEO/2020/03_MARZO/12_ACUARIO IBURSA", "region": "CDMX", "municipio": "MIGUEL HIDALGO", "places": ["ACUARIO IBURSA"], "tod": null, "lat": null, "lon": null, "time": null, "size": 426288624, "sizetxt": "406.5 MB", "year": "2020", "month": "03", "day": "12", "date": "2020-03-12", "dur": 48.765383, "durtxt": "0:48", "res": "1920x1080", "poster": "assets/e03cb9e36283a907_p.jpg", "sprite": "assets/e03cb9e36283a907_s.jpg", "tags": ["CDMX", "MIGUEL HIDALGO", "ACUARIO IBURSA", "VIDEO", "MOV", "2020", "marzo"]}];
+const out=document.getElementById('out'),q=document.getElementById('q'),stat=document.getElementById('stat'),chips=document.getElementById('chips'),sortSel=document.getElementById('sort');
+DATA.forEach(d=>d._s=(d.tags.join(' ')+' '+d.folder+' '+d.name).toLowerCase());
+let active=new Set();
+function mkchip(label,val){const c=document.createElement('span');c.className='chip';c.textContent=label;c.onclick=()=>{c.classList.toggle('on');active.has(val)?active.delete(val):active.add(val);render()};chips.appendChild(c)}
+const nVid=DATA.filter(d=>d.type==='video').length,nFot=DATA.filter(d=>d.type==='photo').length,nRaw=DATA.filter(d=>d.raw).length;
+mkchip('▶ VIDEO ('+nVid+')','VIDEO');mkchip('📷 FOTO ('+nFot+')','FOTO');if(nRaw)mkchip('RAW ('+nRaw+')','RAW');
+const freq={};DATA.forEach(d=>d.places.forEach(p=>freq[p]=(freq[p]||0)+1));
+Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12).forEach(([p,n])=>mkchip(p+' ('+n+')',p));
+function scrub(el,d){if(!d.sprite)return;const N=16,C=4;
+ el.onmousemove=e=>{const r=el.getBoundingClientRect();let i=Math.max(0,Math.min(N-1,Math.floor((e.clientX-r.left)/r.width*N)));const col=i%C,row=(i/C)|0;el.style.backgroundImage=`url('${d.sprite}')`;el.style.backgroundSize=`${C*100}% ${C*100}%`;el.style.backgroundPosition=`${col/(C-1)*100}% ${row/(C-1)*100}%`};
+ el.onmouseleave=()=>{el.style.backgroundImage=`url('${d.poster}')`;el.style.backgroundSize='cover';el.style.backgroundPosition='center'}}
+function card(d){const c=document.createElement('div');c.className='card';
+ const t=document.createElement('div');t.className='thumb';if(d.poster)t.style.backgroundImage=`url('${d.poster}')`;
+ t.innerHTML=`<span class=badge>${d.type==='video'?'▶ video':(d.raw?'📷 RAW':'📷 foto')}</span>`+(d.raw?'<span class=raw>+DNG</span>':'')+(d.durtxt?`<span class=dur>${d.durtxt}</span>`:'');
+ if(d.type==='video')scrub(t,d);t.onclick=()=>window.open(encodeURI(d.src),'_blank');
+ const m=document.createElement('div');m.className='meta';
+ const gps=(d.lat!=null&&d.lon!=null)?`<a href="https://maps.google.com/?q=${d.lat},${d.lon}" target=_blank>📍 ${d.lat},${d.lon}</a>`:'';
+ const geo=(d.geo&&(d.geo.colonia||d.geo.municipio||d.geo.road))?`<div class=row style="color:#9c9">🗺 ${[d.geo.road,d.geo.colonia,d.geo.municipio].filter(Boolean).join(', ')}</div>`:'';
+ m.innerHTML=`<div class=nm title="${d.name}">${d.name}</div>`+
+  `<div class=row>${d.durtxt?`<span>⏱ <b>${d.durtxt}</b></span>`:''}<span>💾 <b>${d.sizetxt}</b></span>${d.res?`<span>🖥 ${d.res}</span>`:''}${d.time?`<span>🕐 ${d.time}</span>`:''}</div>`+
+  geo+`<div class=row>${gps}</div>`+
+  `<div class=links><a href="${encodeURI(d.src)}" target=_blank>abrir archivo ↗</a><a href="${encodeURI(d.folderlink)}" target=_blank>📂 abrir carpeta</a></div>`;
+ c.appendChild(t);c.appendChild(m);return c}
+function render(){const terms=q.value.toLowerCase().split(/\s+/).filter(Boolean);
+ const res=DATA.filter(d=>{for(const t of terms)if(!d._s.includes(t))return false;for(const p of active)if(!d.tags.includes(p))return false;return true});
+ const nv=res.filter(d=>d.type==='video').length;stat.textContent=`— ${res.length} resultados (${nv} video, ${res.length-nv} foto)`;
+ const groups={};res.forEach(d=>{(groups[d.folder]=groups[d.folder]||[]).push(d)});
+ let keys=Object.keys(groups);const s=sortSel.value;
+ const gdate=k=>{const a=groups[k];for(const d of a)if(d.date)return d.date;return (a[0].year||'')+(a[0].month||'')+(a[0].day||'')};
+ if(s==='date')keys.sort((a,b)=>gdate(b).localeCompare(gdate(a)));
+ else if(s==='datea')keys.sort((a,b)=>gdate(a).localeCompare(gdate(b)));
+ else if(s==='count')keys.sort((a,b)=>groups[b].length-groups[a].length);
+ else keys.sort();
+ out.innerHTML='';const frag=document.createDocumentFragment();let shown=0;
+ for(const k of keys){if(shown>1200){const w=document.createElement('div');w.style.cssText='padding:16px;color:#999';w.textContent='… afina la búsqueda para ver más.';frag.appendChild(w);break}
+  const a=groups[k];const g=document.createElement('div');g.className='grp';
+  const date=gdate(k);const dd=a.find(d=>d.date);
+  const head=document.createElement('div');head.className='ghead';
+  head.innerHTML=`<span class=gt>📂 ${k.replace(/</g,'')}</span>`+(dd&&dd.date?`<span class=gd>${dd.date}${dd.tod?' · '+dd.tod:''}</span>`:'')+`<span class=gc>${a.length} archivo(s)</span>`+`<a href="${encodeURI(a[0].folderlink)}" target=_blank>📂 abrir esta carpeta ↗</a>`;
+  const grid=document.createElement('div');grid.className='grid';
+  a.forEach(d=>{grid.appendChild(card(d));shown++});
+  g.appendChild(head);g.appendChild(grid);frag.appendChild(g)}
+ out.appendChild(frag)}
+q.addEventListener('input',render);sortSel.addEventListener('change',render);render();
+</script></body></html>
