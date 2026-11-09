@@ -2,6 +2,9 @@
 
 Formato `MAYOR.MENOR.PARCHE`. Cada versión se marca con un tag de git (`v0.0.0`, ...).
 
+## [0.2.1] - 2026-11-08
+- El "estilo del día" ya no se carga solo al abrir la edición rápida; se aplica únicamente si se elige en la lista de estilos. Descargar una foto nunca afecta a las demás; el lote solo ocurre con "Aplicar y descargar ZIP".
+
 ## [0.2.0] - 2026-11-06
 Descarga en JPG y edición rápida de fotos desde el catálogo.
 - Al abrir una foto (clic en la miniatura o "⬇ JPG / editar") pregunta: descargar original (JPG) o edición rápida.

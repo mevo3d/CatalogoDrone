@@ -142,7 +142,7 @@ window.openPhoto=async d=>{cur={d,base:null,loaded:null};P={...DEF};$('ed').clas
  $('stepA').style.display='';$('stepB').style.display='none';setP(DEF);fillStyles();fillScopes();await openLoad(d)};
 $('edclose').onclick=()=>{$('ed').classList.remove('on');cur=null;msg('')};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cur)$('edclose').onclick()});
-$('btnEdit').onclick=()=>{$('stepA').style.display='none';$('stepB').style.display='';const dk=ls.get('catdrone_daystyle',{})[dayKey(cur.d)];if(dk){$('edstyle').value='__day';setP(dk)}};
+$('btnEdit').onclick=()=>{$('stepA').style.display='none';$('stepB').style.display='';$('edstyle').value=''};
 $('btnBack').onclick=()=>{$('stepB').style.display='none';$('stepA').style.display='';setP(DEF)};
 $('btnOrig').onclick=async()=>{if(busy||!cur)return;busy=true;const d=cur.d,res=$('edres').value;
  try{if(res==='orig'&&/\.jpe?g$/i.test(d.name)&&!d.external){save(await (await fetch(encodeURI(d.src))).blob(),d.name)}
