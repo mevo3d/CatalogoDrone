@@ -16,6 +16,7 @@
 #ed .btn:disabled{opacity:.5;cursor:wait}
 #ed .sl{display:flex;align-items:center;gap:8px}#ed .sl input{flex:1}#ed .sl span{width:38px;text-align:right;font-size:12px;color:#9bd}
 #ed .row2{display:flex;gap:6px}#ed .row2>*{flex:1}
+#ed .msg{white-space:pre-line;min-width:240px}#ed .bar{height:6px;background:#333;border-radius:4px;margin-top:8px;overflow:hidden}#ed .bar i{display:block;height:100%;width:0;background:#3a6;transition:width .15s}#ed .bar.ind i{width:35%;animation:edslide 1s infinite ease-in-out}@keyframes edslide{0%{margin-left:-35%}100%{margin-left:100%}}
 #ed .note{font-size:11px;color:#e8a55a;margin-top:6px}
 #ed .x{background:#333;border:0;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer}
 @media(max-width:800px){#ed .box{flex-direction:column;margin:0;border-radius:0}#ed .panel{width:auto;max-height:55%;border-left:0;border-top:1px solid #2c2c30}}
@@ -62,7 +63,14 @@ $('edres').value=ls.get('catdrone_res','orig');$('edres').onchange=()=>ls.set('c
 SL.forEach(([k,t,mn,mx])=>{const w=document.createElement('div');w.innerHTML=`<label>${t}</label><div class=sl><input type=range min=${mn} max=${mx} value=0 id=sl_${k}><span id=sv_${k}>0</span></div>`;$('sliders').appendChild(w);
  const r=w.querySelector('input');r.oninput=()=>{P[k]=+r.value;$('sv_'+k).textContent=r.value;sched()};r.ondblclick=()=>{r.value=0;r.oninput()}});
 function setP(p){P={...DEF,...p};SL.forEach(([k])=>{$('sl_'+k).value=P[k];$('sv_'+k).textContent=P[k]});sched()}
-function msg(t){const m=$('edmsg');m.style.display=t?'block':'none';m.textContent=t||''}
+function msg(t,pct){const m=$('edmsg');m.style.display=t?'block':'none';m.textContent='';if(!t)return;m.append(t);
+ if(pct!==undefined&&pct!==null){const b=document.createElement('div');b.className='bar'+(pct<0?' ind':'');const i=document.createElement('i');if(pct>=0)i.style.width=Math.min(100,pct)+'%';b.appendChild(i);m.appendChild(b)}}
+const mb=n=>(n/1048576).toFixed(1)+' MB';
+async function fetchProg(url,say){const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);const tot=+r.headers.get('Content-Length')||0;
+ if(!r.body||!r.body.getReader){say('Descargando…',-1);return new Uint8Array(await r.arrayBuffer())}
+ const rd=r.body.getReader(),parts=[];let got=0;
+ for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;say(tot?`Descargando ${mb(got)} de ${mb(tot)} (${Math.round(got/tot*100)}%)`:`Descargando ${mb(got)}…`,tot?got/tot*100:-1)}
+ const out=new Uint8Array(got);let o=0;for(const c of parts){out.set(c,o);o+=c.length}return out}
 // ---- motor de edición ----
 function lut(p,gain){const t=new Uint8ClampedArray(256),e=Math.pow(2,p.exp/50),f=1+p.con/100;
  for(let i=0;i<256;i++){let v=Math.pow(i/255,2.2)*e*gain;v=Math.pow(Math.max(0,v),1/2.2);v=(v-.5)*f+.5;t[i]=v*255}return t}
@@ -78,17 +86,18 @@ function process(img,p){const d=img.data,n=d.length,tp=p.tmp/100;
  return img}
 // ---- carga de imagen completa (JPG/PNG directo, DNG revelado en el navegador) ----
 const cache=new Map();
-function fromImg(u){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);ok(c)};im.onerror=()=>no(new Error('No se pudo cargar '+u));im.src=u})}
-async function decodeRaw(url,say){say('Descargando RAW…');const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);const buf=new Uint8Array(await r.arrayBuffer());
- say('Revelando RAW (puede tardar unos segundos)…');const LR=(await import('../vendor/libraw/index.js')).default,lr=new LR();
+async function fromImg(u,say){let src=u,tmp=null;if(say){const bytes=await fetchProg(u,say);tmp=URL.createObjectURL(new Blob([bytes]));src=tmp;say('Preparando imagen…',-1)}
+ try{return await new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);ok(c)};im.onerror=()=>no(new Error('No se pudo cargar '+u));im.src=src})}finally{if(tmp)URL.revokeObjectURL(tmp)}}
+async function decodeRaw(url,say){const buf=await fetchProg(url,say);
+ say('Revelando RAW (puede tardar unos segundos)…',-1);const LR=(await import('../vendor/libraw/index.js')).default,lr=new LR();
  try{await lr.open(buf,{useCameraWb:true,outputBps:8,outputColor:1,userQual:3});const im=await lr.imageData();
   const w=im.width,h=im.height,src=im.data,c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d'),id=x.createImageData(w,h),o=id.data,ch=im.colors||3;
   for(let i=0,j=0,n=w*h;i<n;i++,j+=ch){o[i*4]=src[j];o[i*4+1]=src[j+1];o[i*4+2]=src[j+2];o[i*4+3]=255}
   x.putImageData(id,0,0);return c}finally{lr.dispose&&lr.dispose()}}
 async function loadFull(d,say){say=say||(()=>{});if(cache.has(d.id)){return cache.get(d.id)}
  let c,lim=false;
- if(d.full){c=await fromImg(encodeURI(d.full))}
- else if(WEB.test(d.name)&&!d.external){c=await fromImg(encodeURI(d.src))}
+ if(d.full){c=await fromImg(encodeURI(d.full),say)}
+ else if(WEB.test(d.name)&&!d.external){c=await fromImg(encodeURI(d.src),say)}
  else if(d.raw&&!d.external){try{c=await decodeRaw(encodeURI(d.src),say)}catch(e){console.warn('RAW falló',e);c=await fromImg(d.poster);lim=true}}
  else{c=await fromImg(d.poster);lim=true}
  const r={c,lim};cache.clear();cache.set(d.id,r);return r}
@@ -133,11 +142,11 @@ $('btnBatch').onclick=async()=>{if(busy)return;const sc=scopes(cur.d).find(s=>s[
  if(!list.length)return;if(list.length>150&&!confirm(list.length+' fotos pueden usar mucha memoria en el navegador. ¿Continuar?'))return;
  busy=true;$('btnBatch').disabled=true;const res=$('edres').value,files=[],p={...P},d0=cur.d;remember(d0);
  try{for(let i=0;i<list.length;i++){const d=list[i];msg(`Procesando ${i+1}/${list.length}\n${d.name}`);
-   try{const{c}=await loadFull(d,t=>msg(`${i+1}/${list.length} · ${t}`));const blob=await toJpeg(c,res,p);files.push({name:fname(d,res,true),data:new Uint8Array(await blob.arrayBuffer())})}catch(e){console.warn('omitida',d.name,e)}}
+   try{const{c}=await loadFull(d,(t,pp)=>msg(`${i+1}/${list.length} · ${d.name}\n${t}`,pp));const blob=await toJpeg(c,res,p);files.push({name:fname(d,res,true),data:new Uint8Array(await blob.arrayBuffer())})}catch(e){console.warn('omitida',d.name,e)}}
   if(files.length){const used=new Set();files.forEach(f=>{let n=f.name,k=1;while(used.has(n))n=f.name.replace(/\.jpg$/,'_'+(k++)+'.jpg');f.name=n;used.add(n)});save(makeZip(files),'catalogo_drone_'+(d0.date||'lote')+'.zip')}
   msg(files.length+' foto(s) en el ZIP');setTimeout(()=>msg(''),2500)}finally{busy=false;$('btnBatch').disabled=false;cache.clear();cur.loaded=null;await openLoad(d0,true)}};
 // ---- apertura ----
-async function openLoad(d,keepStep){msg('Cargando…');try{const r=await loadFull(d,msg);cur.loaded=r;cur.base=mkBase(r.c);$('rawnote').textContent=r.lim?'⚠ No se pudo obtener la imagen a resolución completa; se usará la vista previa pequeña (480 px).':'';drawPrev()}catch(e){msg('Error: '+e.message);return}msg('')}
+async function openLoad(d,keepStep){msg('Cargando…',-1);try{const r=await loadFull(d,msg);cur.loaded=r;cur.base=mkBase(r.c);$('rawnote').textContent=r.lim?'⚠ No se pudo obtener la imagen a resolución completa; se usará la vista previa pequeña (480 px).':'';drawPrev()}catch(e){msg('Error: '+e.message);return}msg('')}
 window.openPhoto=async d=>{cur={d,base:null,loaded:null};P={...DEF};$('ed').classList.add('on');$('edname').textContent=d.name+(d.raw?'  (RAW — se revela en el navegador)':'');
  $('stepA').style.display='';$('stepB').style.display='none';setP(DEF);fillStyles();fillScopes();await openLoad(d)};
 $('edclose').onclick=()=>{$('ed').classList.remove('on');cur=null;msg('')};

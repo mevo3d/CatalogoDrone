@@ -2,6 +2,9 @@
 
 Formato `MAYOR.MENOR.PARCHE`. Cada versión se marca con un tag de git (`v0.0.0`, ...).
 
+## [0.2.2] - 2026-11-08
+- Barra de progreso al abrir una foto: muestra MB descargados, total y porcentaje; indicador animado mientras se revela el DNG o se prepara la imagen. También aparece en cada foto del lote ZIP.
+
 ## [0.2.1] - 2026-11-08
 - El "estilo del día" ya no se carga solo al abrir la edición rápida; se aplica únicamente si se elige en la lista de estilos. Descargar una foto nunca afecta a las demás; el lote solo ocurre con "Aplicar y descargar ZIP".
 
